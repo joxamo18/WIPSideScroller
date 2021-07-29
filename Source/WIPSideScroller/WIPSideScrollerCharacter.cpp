@@ -12,6 +12,11 @@ AWIPSideScrollerCharacter::AWIPSideScrollerCharacter()
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 
+	// declare overlap events
+	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &AWIPSideScrollerCharacter::OnOverlapBegin);
+	GetCapsuleComponent()->OnComponentEndOverlap.AddDynamic(this, &AWIPSideScrollerCharacter::OnOverlapEnd);
+
+
 	// Don't rotate when the controller rotates.
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
@@ -40,9 +45,18 @@ AWIPSideScrollerCharacter::AWIPSideScrollerCharacter()
 	GetCharacterMovement()->GroundFriction = 3.f;
 	GetCharacterMovement()->MaxWalkSpeed = 600.f;
 	GetCharacterMovement()->MaxFlySpeed = 600.f;
+	JumpMaxCount = 2;
+	JumpMaxHoldTime = 2.0;
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
+
+	isAgainstWall = false;
+}
+
+void AWIPSideScrollerCharacter::BeginPlay() {
+	Super::BeginPlay();
+	maxJumpTempHolder = JumpMaxCount;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -51,7 +65,7 @@ AWIPSideScrollerCharacter::AWIPSideScrollerCharacter()
 void AWIPSideScrollerCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
 	// set up gameplay key bindings
-	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
+	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &AWIPSideScrollerCharacter::JumpStarted);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 	PlayerInputComponent->BindAxis("MoveRight", this, &AWIPSideScrollerCharacter::MoveRight);
 
@@ -59,15 +73,50 @@ void AWIPSideScrollerCharacter::SetupPlayerInputComponent(class UInputComponent*
 	PlayerInputComponent->BindTouch(IE_Released, this, &AWIPSideScrollerCharacter::TouchStopped);
 }
 
+void AWIPSideScrollerCharacter::Tick(float DeltaSeconds)
+{
+	if (WallJumpTimer > 0.0) {
+		WallJumpTimer = WallJumpTimer - DeltaSeconds;
+		AddMovementInput(FVector(0.0f, playerDirection, 0.f), 1);
+	}
+}
+
+void AWIPSideScrollerCharacter::Landed(const FHitResult& Hit) {
+	JumpMaxCount = maxJumpTempHolder;
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("landed"));
+}
+
+
 void AWIPSideScrollerCharacter::MoveRight(float Value)
 {
 	// add movement in that direction
-	AddMovementInput(FVector(0.f,-1.f,0.f), Value);
+	if (WallJumpTimer <= 0.0) {
+		AddMovementInput(FVector(0.f, -1.f, 0.f), Value);
+	}
+
+	if (Value > 0) {
+		playerDirection = 1.0f;
+	}
+	else {
+		playerDirection = -1.0f;
+	}
+	
+}
+
+void AWIPSideScrollerCharacter::JumpStarted()
+{
+	if (isAgainstWall && GetCharacterMovement()->JumpZVelocity && JumpCurrentCount > 0) {
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("wall jump"));
+		WallJumpTimer = MaxWallJumpDuration;
+		JumpMaxCount = JumpMaxCount + 1;
+	}
+	Jump();
 }
 
 void AWIPSideScrollerCharacter::TouchStarted(const ETouchIndex::Type FingerIndex, const FVector Location)
 {
 	// jump on any touch
+
 	Jump();
 }
 
@@ -76,3 +125,18 @@ void AWIPSideScrollerCharacter::TouchStopped(const ETouchIndex::Type FingerIndex
 	StopJumping();
 }
 
+void AWIPSideScrollerCharacter::OnOverlapBegin(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (OtherActor && (OtherActor != this) && OtherComp)
+	{
+		isAgainstWall = true;
+	}
+}
+
+void AWIPSideScrollerCharacter::OnOverlapEnd(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	if (OtherActor && (OtherActor != this) && OtherComp)
+	{
+		isAgainstWall = false;
+	}
+}
