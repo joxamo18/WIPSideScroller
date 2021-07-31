@@ -55,6 +55,7 @@ AWIPSideScrollerCharacter::AWIPSideScrollerCharacter()
 void AWIPSideScrollerCharacter::BeginPlay() {
 	Super::BeginPlay();
 	maxJumpTempHolder = JumpMaxCount;
+	playerDirection = 1;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -65,6 +66,10 @@ void AWIPSideScrollerCharacter::SetupPlayerInputComponent(class UInputComponent*
 	// set up gameplay key bindings
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &AWIPSideScrollerCharacter::JumpStarted);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
+
+	PlayerInputComponent->BindAction("Dash", IE_Pressed, this, &AWIPSideScrollerCharacter::DashStarted);
+	PlayerInputComponent->BindAction("Dash", IE_Released, this, &AWIPSideScrollerCharacter::DashReleased);
+
 	PlayerInputComponent->BindAxis("MoveRight", this, &AWIPSideScrollerCharacter::MoveRight);
 
 	PlayerInputComponent->BindTouch(IE_Pressed, this, &AWIPSideScrollerCharacter::TouchStarted);
@@ -73,6 +78,11 @@ void AWIPSideScrollerCharacter::SetupPlayerInputComponent(class UInputComponent*
 
 void AWIPSideScrollerCharacter::Tick(float DeltaSeconds)
 {
+	if (DashTimer > 0.0) {
+		DashTimer = DashTimer - DeltaSeconds;
+		GetCharacterMovement()->Velocity = FVector(0.0f, (-1 * playerDirection) * DashSpeed, 0.f);
+	}
+
 	if (WallJumpTimer > 0.0) {
 		WallJumpTimer = WallJumpTimer - DeltaSeconds;
 		AddMovementInput(FVector(0.0f, playerDirection, 0.f), 1);
@@ -94,7 +104,7 @@ void AWIPSideScrollerCharacter::MoveRight(float Value)
 	if (Value > 0) {
 		playerDirection = 1.0f;
 	}
-	else {
+	else if (Value < 0) {
 		playerDirection = -1.0f;
 	}
 	
@@ -108,6 +118,17 @@ void AWIPSideScrollerCharacter::JumpStarted()
 		JumpMaxCount = JumpMaxCount + 1;
 	}
 	Jump();
+}
+
+void AWIPSideScrollerCharacter::DashStarted()
+{
+	DashTimer = MaxDashTimeDuration;
+}
+
+void AWIPSideScrollerCharacter::DashReleased()
+{
+	DashTimer = 0.0f;
+	GetCharacterMovement()->Velocity = FVector(0.0f, 0.0f, 0.f);
 }
 
 void AWIPSideScrollerCharacter::TouchStarted(const ETouchIndex::Type FingerIndex, const FVector Location)
