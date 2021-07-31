@@ -19,10 +19,27 @@ class AWIPSideScrollerCharacter : public ACharacter
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class USpringArmComponent* CameraBoom;
 
-protected:
+	UPROPERTY(EditAnywhere)
+		float MaxWallJumpDuration;
 
+	bool isAgainstWall;
+
+	float WallJumpTimer;
+
+	float playerDirection;
+
+	float maxJumpTempHolder;
+
+protected:
+	virtual void Tick(float DeltaSeconds);
+
+	void BeginPlay();
 	/** Called for side to side input */
 	void MoveRight(float Val);
+
+	virtual void Landed(const FHitResult& Hit) override;
+
+	void JumpStarted();
 
 	/** Handle touch inputs. */
 	void TouchStarted(const ETouchIndex::Type FingerIndex, const FVector Location);
@@ -34,6 +51,14 @@ protected:
 	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
 	// End of APawn interface
 
+	// declare overlap begin function
+	UFUNCTION()
+		void OnOverlapBegin(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	// declare overlap end function
+	UFUNCTION()
+		void OnOverlapEnd(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
 
 public:
 	AWIPSideScrollerCharacter();
@@ -42,4 +67,5 @@ public:
 	FORCEINLINE class UCameraComponent* GetSideViewCameraComponent() const { return SideViewCameraComponent; }
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
+
 };
