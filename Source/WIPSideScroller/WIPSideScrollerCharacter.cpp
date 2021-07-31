@@ -45,8 +45,6 @@ AWIPSideScrollerCharacter::AWIPSideScrollerCharacter()
 	GetCharacterMovement()->GroundFriction = 3.f;
 	GetCharacterMovement()->MaxWalkSpeed = 600.f;
 	GetCharacterMovement()->MaxFlySpeed = 600.f;
-	JumpMaxCount = 2;
-	JumpMaxHoldTime = 2.0;
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
@@ -83,7 +81,6 @@ void AWIPSideScrollerCharacter::Tick(float DeltaSeconds)
 
 void AWIPSideScrollerCharacter::Landed(const FHitResult& Hit) {
 	JumpMaxCount = maxJumpTempHolder;
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("landed"));
 }
 
 
