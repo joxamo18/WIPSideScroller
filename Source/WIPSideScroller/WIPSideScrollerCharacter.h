@@ -22,9 +22,17 @@ class AWIPSideScrollerCharacter : public ACharacter
 	UPROPERTY(EditAnywhere)
 		float MaxWallJumpDuration;
 
+	UPROPERTY(EditAnywhere)
+		float MaxDashTimeDuration;
+
+	UPROPERTY(EditAnywhere)
+		float DashSpeed;
+
 	bool isAgainstWall;
 
 	float WallJumpTimer;
+
+	float DashTimer;
 
 	float playerDirection;
 
@@ -40,6 +48,11 @@ protected:
 	virtual void Landed(const FHitResult& Hit) override;
 
 	void JumpStarted();
+
+	void DashStarted();
+
+	void DashReleased();
+
 
 	/** Handle touch inputs. */
 	void TouchStarted(const ETouchIndex::Type FingerIndex, const FVector Location);
