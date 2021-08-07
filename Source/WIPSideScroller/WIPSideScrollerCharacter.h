@@ -38,12 +38,23 @@ class AWIPSideScrollerCharacter : public ACharacter
 
 	float maxJumpTempHolder;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	float aimValueY;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	float aimValueX;
+
 protected:
 	virtual void Tick(float DeltaSeconds);
 
 	void BeginPlay();
 	/** Called for side to side input */
 	void MoveRight(float Val);
+
+	void AimUp(float Val);
+
+	void AimRight(float Val);
+
 
 	virtual void Landed(const FHitResult& Hit) override;
 
