@@ -72,6 +72,9 @@ void AWIPSideScrollerCharacter::SetupPlayerInputComponent(class UInputComponent*
 
 	PlayerInputComponent->BindAxis("MoveRight", this, &AWIPSideScrollerCharacter::MoveRight);
 
+	PlayerInputComponent->BindAxis("AimRight", this, &AWIPSideScrollerCharacter::AimRight);
+	PlayerInputComponent->BindAxis("AimUp", this, &AWIPSideScrollerCharacter::AimUp);
+
 	PlayerInputComponent->BindTouch(IE_Pressed, this, &AWIPSideScrollerCharacter::TouchStarted);
 	PlayerInputComponent->BindTouch(IE_Released, this, &AWIPSideScrollerCharacter::TouchStopped);
 }
@@ -87,6 +90,10 @@ void AWIPSideScrollerCharacter::Tick(float DeltaSeconds)
 		WallJumpTimer = WallJumpTimer - DeltaSeconds;
 		AddMovementInput(FVector(0.0f, playerDirection, 0.f), 1);
 	}
+
+	if ((GetInputAxisValue("AimUp") != 0 || GetInputAxisValue("AimRight") != 0) && DashTimer <= 0) {
+		GetCharacterMovement()->Velocity = FVector(0.0f, 0.0f, 0.f);
+	}
 }
 
 void AWIPSideScrollerCharacter::Landed(const FHitResult& Hit) {
@@ -96,17 +103,43 @@ void AWIPSideScrollerCharacter::Landed(const FHitResult& Hit) {
 
 void AWIPSideScrollerCharacter::MoveRight(float Value)
 {
-	// add movement in that direction
-	if (WallJumpTimer <= 0.0) {
-		AddMovementInput(FVector(0.f, -1.f, 0.f), Value);
+	if (GetInputAxisValue("AimUp") == 0 && GetInputAxisValue("AimRight") == 0) {
+		// add movement in that direction
+		if (WallJumpTimer <= 0.0) {
+			AddMovementInput(FVector(0.f, -1.f, 0.f), Value);
+		}
+
+		if (Value > 0) {
+			playerDirection = 1.0f;
+		}
+		else if (Value < 0) {
+			playerDirection = -1.0f;
+		}
+	}
+	
+}
+
+void AWIPSideScrollerCharacter::AimUp(float Val)
+{
+	aimValueY = Val;
+}
+
+void AWIPSideScrollerCharacter::AimRight(float Val)
+{
+	aimValueX = Val;
+	if (Val < 0 && playerDirection != -1) {
+		playerDirection = -1;
+		FRotator newRotation(0, 90, 0);
+		SetActorRotation(newRotation);
 	}
 
-	if (Value > 0) {
-		playerDirection = 1.0f;
+	if (Val > 0 && playerDirection != 1) {
+		playerDirection = 1;
+		FRotator newRotation(0, 270, 0);
+		SetActorRotation(newRotation);
 	}
-	else if (Value < 0) {
-		playerDirection = -1.0f;
-	}
+
+
 	
 }
 
